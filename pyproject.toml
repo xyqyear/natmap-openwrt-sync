@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "natmap-openwrt-sync"
-version = "0.0.1-dev"
+version = "0.1.0"
 description = "a tool that syncs external ip and port with natmap on openwrt"
 authors = ["xyqyear <xyqyear@gmail.com>"]
 readme = "README.md"
