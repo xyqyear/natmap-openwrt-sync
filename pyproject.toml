@@ -4,10 +4,7 @@ version = "0.1.0"
 description = "a tool that syncs external ip and port with natmap on openwrt"
 authors = ["xyqyear <xyqyear@gmail.com>"]
 readme = "README.md"
-packages = [{include = "natmap_openwrt_sync"}]
-
-[tool.poetry.scripts]
-serve = "osu_beatmap_xplorer.__main__:main"
+packages = [{ include = "natmap_openwrt_sync" }]
 
 [tool.poetry.dependencies]
 python = "^3.11"
