@@ -1,0 +1,13 @@
+bind_host: 0.0.0.0
+bind_port: 8080
+
+ssh_monitor:
+  enabled: true
+  ssh_host: openwrt
+  ssh_user: root
+  ssh_port: 22
+  ssh_key_path: id_ed25519_for_natmap
+  ssh_poll_interval: 60
+
+storage_file: mappings.json
+logging_level: DEBUG
