@@ -1,0 +1,10 @@
+version: '3'
+
+services:
+  clash-parser:
+    image: ghcr.io/xyqyear/natmap_openwrt_sync
+    ports:
+      - 8080:80
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
