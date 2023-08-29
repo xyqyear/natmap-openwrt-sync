@@ -1,5 +1,7 @@
-from fabric import Connection
 import asyncio
+
+from fabric import Connection
+
 from .utils import aioify
 
 

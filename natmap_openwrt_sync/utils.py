@@ -1,7 +1,5 @@
-from collections import Counter
-from typing import Awaitable, Callable, TypeVar, ParamSpec
 import asyncio
-
+from typing import Awaitable, Callable, ParamSpec, TypeVar
 
 T = TypeVar("T")
 P = ParamSpec("P")

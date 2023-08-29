@@ -1,8 +1,6 @@
-import json
-import aiofiles
-from typing import Optional, TypedDict
+from typing import TypedDict
 
-from .config import config
+import aiosqlite
 
 
 class MappingValueT(TypedDict):
@@ -14,28 +12,42 @@ class MappingValueT(TypedDict):
 MappingsT = dict[str, MappingValueT]
 
 
-async def get_all_stored_mappings() -> MappingsT:
-    try:
-        async with aiofiles.open(config["storage_file"]) as f:
-            return json.loads(await f.read())
-    except FileNotFoundError:
-        return {}
+class Database:
+    async def connect(self, db_path: str):
+        self._db = await aiosqlite.connect(db_path)
+        await self._db.execute(
+            "CREATE TABLE IF NOT EXISTS mappings (key TEXT PRIMARY KEY, ip TEXT, port INTEGER)"
+        )
 
+    async def close(self):
+        await self._db.close()
 
-async def get_stored_mapping(key: str) -> MappingValueT:
-    mappings = await get_all_stored_mappings()
-    if key in mappings:
-        return mappings[key]
-    else:
-        return {}
+    async def get_all_mappings(self) -> MappingsT:
+        async with self._db.execute("SELECT * FROM mappings") as cursor:
+            mappings = await cursor.fetchall()
+        return {key: {"ip": ip, "port": port} for key, ip, port in mappings}
 
+    async def get_mapping(self, key: str) -> MappingValueT:
+        async with self._db.execute(
+            "SELECT * FROM mappings WHERE key=?", (key,)
+        ) as cursor:
+            mapping = await cursor.fetchone()
+        if mapping:
+            return {"ip": mapping[1], "port": mapping[2]}
+        else:
+            return {}
 
-async def override_stored_mappings(mappings: MappingsT):
-    async with aiofiles.open(config["storage_file"], "w") as f:
-        await f.write(json.dumps(mappings))
+    async def update_mappings(self, mappings: MappingsT):
+        await self._db.executemany(
+            "INSERT OR REPLACE INTO mappings VALUES (?, ?, ?)",
+            [
+                (key, mapping["ip"], mapping["port"])
+                for key, mapping in mappings.items()
+            ],
+        )
+        await self._db.commit()
 
-
-async def update_stored_mapping(mappings: MappingsT):
-    stored_mappings = await get_all_stored_mappings()
-    stored_mappings.update(mappings)
-    await override_stored_mappings(stored_mappings)
+    async def override_all_mappings(self, mappings: MappingsT):
+        await self._db.execute("DELETE FROM mappings")
+        await self._db.commit()
+        await self.update_mappings(mappings)

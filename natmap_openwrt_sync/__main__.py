@@ -6,13 +6,7 @@ from aiohttp import web
 
 from .config import config
 from .ssh import SSHClient
-from .storage import (
-    MappingsT,
-    get_all_stored_mappings,
-    override_stored_mappings,
-    update_stored_mapping,
-    get_stored_mapping,
-)
+from .storage import Database, MappingsT
 
 logging.basicConfig(
     format="%(asctime)s %(levelname)s %(message)s",
@@ -24,6 +18,7 @@ logging.basicConfig(
 routes = web.RouteTableDef()
 
 ws_clients: set[web.WebSocketResponse] = set()
+db = Database()
 
 
 async def notify_clients(mappings: dict):
@@ -40,16 +35,16 @@ async def notify_clients(mappings: dict):
 @routes.get("/all_mappings")
 async def get_all_mappings(request: web.Request):
     logging.debug(f"Client {request.remote} requested all maps")
-    return web.json_response(await get_all_stored_mappings())
+    return web.json_response(await db.get_all_mappings())
 
 
 @routes.get("/mapping/{key}")
 async def get_mapping(request: web.Request):
     key = request.match_info["key"]
     logging.debug(f"Client {request.remote} requested map {key}")
-    mapping_info = await get_stored_mapping(key)
+    mapping_info = await get_mapping(key)
     if mapping_info:
-        return web.json_response(await get_stored_mapping(key))
+        return web.json_response(mapping_info)
     else:
         return web.Response(status=404)
 
@@ -60,7 +55,7 @@ async def update_mappings(request: web.Request):
     logging.info(
         f"Client {request.remote} overrided mappings with value {new_mappings}"
     )
-    asyncio.create_task(update_stored_mapping(new_mappings))
+    asyncio.create_task(db.update_mappings(new_mappings))
     asyncio.create_task(notify_clients(new_mappings))
 
     return web.Response(status=204)
@@ -117,10 +112,10 @@ async def ssh_monitor():
             }
 
         # if mappings changed, update the stored mappings and notify clients
-        current_mappings = await get_all_stored_mappings()
+        current_mappings = await db.get_all_mappings()
         if mappings != current_mappings:
             logging.info(f"mappings changed via ssh monitoring: {mappings}")
-            await override_stored_mappings(mappings)
+            await db.override_all_mappings(mappings)
 
             # only notify clients of new or updated mappings
             diff_mappings: MappingsT = dict()
@@ -136,6 +131,8 @@ async def ssh_monitor():
 
 
 async def run():
+    await db.connect(config["db_path"])
+
     app = web.Application()
     app.add_routes(routes)
     runner = web.AppRunner(app)
@@ -147,6 +144,8 @@ async def run():
 
     # await forever incase ssh monitoring is disabled
     await asyncio.Future()
+
+    await db.close()
 
 
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
-from typing import Optional, TypedDict, Literal
-from ruamel.yaml import YAML
 import os
+from typing import Literal, Optional, TypedDict
+
+from ruamel.yaml import YAML
 
 if os.environ.get("NATMAP_SYNCER_CONFIG_PATH"):
     CONFIG_PATH = os.environ.get("NATMAP_SYNCER_CONFIG_PATH")
@@ -21,7 +22,7 @@ class ConfigT(TypedDict):
     bind_host: str
     bind_port: int
     ssh_monitor: SSHMonitorConfigT
-    storage_file: str
+    db_path: str
     logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
 
