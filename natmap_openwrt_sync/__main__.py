@@ -80,17 +80,7 @@ async def websocket_handler(request: web.Request):
     return ws
 
 
-async def ssh_monitor():
-    ssh_config = config["ssh_monitor"]
-    if not ssh_config["enabled"]:
-        return
-    ssh_client = SSHClient(
-        host=ssh_config["ssh_host"],
-        user=ssh_config["ssh_user"],
-        port=ssh_config["ssh_port"],
-        key_path=ssh_config["ssh_key_path"],
-    )
-    await ssh_client.ensure_connection()
+async def ssh_monitor(ssh_client: SSHClient, poll_interval: int):
     while True:
         try:
             # list the files in /var/run/natmap/ and cat them to get the mappings
@@ -130,7 +120,7 @@ async def ssh_monitor():
             if diff_mappings:
                 await notify_clients(diff_mappings)
 
-        await asyncio.sleep(ssh_config["ssh_poll_interval"])
+        await asyncio.sleep(poll_interval)
 
 
 async def run():
@@ -143,7 +133,17 @@ async def run():
     site = web.TCPSite(runner, config["bind_host"], config["bind_port"])
     await site.start()
 
-    await ssh_monitor()
+    ssh_config = config["ssh_monitor"]
+    if ssh_config["enabled"]:
+        ssh_client = SSHClient(
+            host=ssh_config["ssh_host"],
+            user=ssh_config["ssh_user"],
+            port=ssh_config["ssh_port"],
+            key_path=ssh_config["ssh_key_path"],
+        )
+        await ssh_client.ensure_connection()
+        await ssh_monitor(ssh_client, ssh_config["ssh_poll_interval"])
+        await ssh_client.close_connection()
 
     # await forever incase ssh monitoring is disabled
     await asyncio.Future()
