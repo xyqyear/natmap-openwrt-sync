@@ -125,7 +125,10 @@ async def ssh_monitor():
                     or mappings[key] != current_mappings[key]
                 ):
                     diff_mappings[key] = mappings[key]
-            await notify_clients(diff_mappings)
+
+            # when there is only mapping being removed, the diff_mappings will be empty
+            if diff_mappings:
+                await notify_clients(diff_mappings)
 
         await asyncio.sleep(ssh_config["ssh_poll_interval"])
 
