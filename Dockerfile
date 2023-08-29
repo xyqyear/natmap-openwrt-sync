@@ -26,7 +26,6 @@ WORKDIR /app
 
 COPY poetry.lock pyproject.toml /app/
 
-# and ffi
 RUN apk add --no-cache \
         gcc \
         musl-dev \
