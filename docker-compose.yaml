@@ -1,7 +1,7 @@
 version: '3'
 
 services:
-  clash-parser:
+  natmap-openwrt-sync:
     image: ghcr.io/xyqyear/natmap-openwrt-sync
     ports:
       - 8080:80
