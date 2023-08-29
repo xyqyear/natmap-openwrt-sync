@@ -42,7 +42,7 @@ async def get_all_mappings(request: web.Request):
 async def get_mapping(request: web.Request):
     key = request.match_info["key"]
     logging.debug(f"Client {request.remote} requested map {key}")
-    mapping_info = await get_mapping(key)
+    mapping_info = await db.get_mapping(key)
     if mapping_info:
         return web.json_response(mapping_info)
     else:
