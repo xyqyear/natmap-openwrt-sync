@@ -34,14 +34,14 @@ async def notify_clients(mappings: dict):
 
 @routes.get("/all_mappings")
 async def get_all_mappings(request: web.Request):
-    logging.debug(f"Client {request.remote} requested all maps")
+    logging.debug(f"Client {request.remote} requested all mappings")
     return web.json_response(await db.get_all_mappings())
 
 
 @routes.get("/mapping/{key}")
 async def get_mapping(request: web.Request):
     key = request.match_info["key"]
-    logging.debug(f"Client {request.remote} requested map {key}")
+    logging.debug(f"Client {request.remote} requested mapping for {key}")
     mapping_info = await db.get_mapping(key)
     if mapping_info:
         return web.json_response(mapping_info)
