@@ -83,6 +83,7 @@ async def websocket_handler(request: web.Request):
 async def ssh_monitor(ssh_client: SSHClient, poll_interval: int):
     while True:
         try:
+            await ssh_client.ensure_connection()
             # list the files in /var/run/natmap/ and cat them to get the mappings
             raw_list = await ssh_client.run_command(
                 "find /var/run/natmap/ -name \"*.json\" -exec cat '{}' +"
