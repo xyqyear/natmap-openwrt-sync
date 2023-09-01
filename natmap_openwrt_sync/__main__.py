@@ -8,11 +8,22 @@ from .config import config
 from .ssh import SSHClient
 from .storage import Database, MappingsT
 
+class DuplicateFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord):
+        current_log = (record.module, record.levelno, record.msg)
+        if current_log != getattr(self, "last_log", None):
+            self.last_log = current_log
+            return True
+        return False
+
 logging.basicConfig(
     format="%(asctime)s %(levelname)s %(message)s",
     level=config["logging_level"],
     datefmt="%Y-%m-%d %H:%M:%S",
 )
+logger = logging.getLogger()
+logger.addFilter(DuplicateFilter())
+logging.getLogger("aiohttp.access").setLevel(logging.WARNING)
 
 
 routes = web.RouteTableDef()
@@ -89,7 +100,7 @@ async def ssh_monitor(ssh_client: SSHClient, poll_interval: int):
                 "find /var/run/natmap/ -name \"*.json\" -exec cat '{}' +"
             )
         except Exception as e:
-            logging.debug(f"ssh monitoring failed with exception {e}")
+            logging.warning(f"ssh monitoring failed with exception {e}")
 
         # convert the raw list to a dict that's of type MappingsT
         mappings: MappingsT = dict()
